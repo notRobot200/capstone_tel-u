@@ -17,8 +17,8 @@ tfidf_vectorizer = joblib.load('tfidf_vectorizer.pkl')
 
 # Koneksi ke MySQL
 db_connection = mysql.connector.connect(
-  host="35.232.14.61",
-  user="nothuman",
+  host="34.145.29.172",
+  user="beingman",
   password="123",
   database="oetomo"
 )
@@ -57,4 +57,3 @@ def predict():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
