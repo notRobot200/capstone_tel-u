@@ -13,5 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the content of the local src directory to the working directory in the container
 COPY . /app/
 
-# Command to run the Flask application
-CMD ["python", "main.py"]
+# Expose the port Flask is running on
+EXPOSE 8080
+
+# Define the command to run the application
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "main:app"]
