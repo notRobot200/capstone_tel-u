@@ -50,7 +50,6 @@ def predict():
     disease_name = data['disease_name']
     predicted_label = predict_label_disease(disease_name)
 
-    # Cari kandidat ICD berdasarkan nama penyakit dan label yang diprediksi
     matching_entries = search_icd_candidates(disease_name, predicted_label)
 
     return jsonify({'predicted_label': predicted_label, 'matching_entries': matching_entries.to_dict(orient='records')})
