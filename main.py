@@ -4,6 +4,7 @@ from sklearn.svm import SVC
 import numpy as np
 import pandas as pd
 import mysql.connector
+from flask_cors import CORS
 
 # Load model dan TF-IDF vectorizer
 model = joblib.load('model_svm.pkl')
@@ -24,6 +25,7 @@ db_connection = mysql.connector.connect(
 )
 
 app = Flask(__name__)
+CORS(app)
 
 def predict_label_disease(disease_name):
     tfidf_text = tfidf_vectorizer.transform([disease_name])
@@ -51,8 +53,10 @@ def predict():
     predicted_label = predict_label_disease(disease_name)
 
     matching_entries = search_icd_candidates(disease_name, predicted_label)
-
-    return jsonify({'predicted_label': predicted_label, 'matching_entries': matching_entries.to_dict(orient='records')})
-
+    response = jsonify({'predicted_label': predicted_label, 'matching_entries': matching_entries.to_dict(orient='records')})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    
+    return response
+  
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
