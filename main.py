@@ -6,7 +6,6 @@ import joblib
 # Fungsi untuk melakukan koneksi ke MySQL dan mendapatkan data dari tabel 'data_icd'
 def get_data_icd_from_db():
     try:
-        # Koneksi ke MySQL
         db_connection = mysql.connector.connect(
             host="34.145.29.172",
             user="beingman",
