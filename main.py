@@ -116,9 +116,9 @@ def search_icd():
     # Format hasil pencarian sebagai JSON
     if not matching_entries.empty:
         result = matching_entries[['kode_icd', 'nama_penyakit']].to_dict(orient='records')
-        return jsonify(result), 200
+        return jsonify(result)
     else:
-        return jsonify({'message': f'No matching ICD codes found for query: {query}'}), 404
+        return jsonify({'message': f'No matching ICD codes found for query: {query}'})
 
 if __name__ == '__main__':
     app.run(port=int(os.environ.get("PORT", 8080)),host='0.0.0.0',debug=True)
