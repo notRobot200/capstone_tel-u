@@ -19,27 +19,23 @@
 # # Define the command to run the application
 # CMD ["gunicorn", "--bind", "0.0.0.0:8080", "main:app"]
 
-# Gunakan image Python 3.9 sebagai base image
+# Use an official Python runtime as a parent image
 FROM python:3.9-slim
 
-# Set environment variable
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-# Set working directory
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy file requirements.txt ke working directory
-COPY requirements.txt /app/
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-# Install dependencies
+# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy seluruh isi directory ke working directory
-COPY . /app/
-
-# Ekspos port yang digunakan oleh aplikasi
+# Expose the port the app runs on
 EXPOSE 8080
 
-# Jalankan aplikasi
-CMD ["gunicorn", "-b", "0.0.0.0:8080", "main:app"]
+# Define environment variable
+ENV FLASK_APP=app.py
+
+# Run app.py when the container launches
+CMD ["flask", "run", "--host=0.0.0.0", "--port=8080"]
