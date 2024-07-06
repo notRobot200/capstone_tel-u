@@ -3,7 +3,11 @@ import pandas as pd
 from flask import Flask, request, jsonify
 import joblib
 import os
+from flask_cors import CORS  # Import CORS
 
+# Inisialisasi Flask
+app = Flask(__name__)
+CORS(app)  # Enable CORS
 
 # Fungsi untuk melakukan koneksi ke MySQL dan mendapatkan data dari tabel 'data_icd'
 def get_data_icd_from_db():
@@ -263,20 +267,15 @@ def search_disease_keywords(dataset, keywords, sort_column='TARIF KELAS 1', asce
     return all_matches.sort_values(by=sort_column, ascending=ascending)
 #MASIH PENGEMBANGAN
 
-# Inisialisasi Flask
-app = Flask(__name__)
+# Load model dan TF-IDF vectorizer
+model = joblib.load('model_svc.pkl')
+tfidf_vectorizer = joblib.load('tfidf_vectorizer.pkl')
 
 @app.route("/")
 def main():
     return """
         Response Successful!
     """
-
-
-# Load model dan TF-IDF vectorizer
-model = joblib.load('model_svc.pkl')
-tfidf_vectorizer = joblib.load('tfidf_vectorizer.pkl')
-
 
 @app.route('/search_icd', methods=['POST'])
 def search_icd():
