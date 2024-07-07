@@ -244,7 +244,7 @@ def fetch_data_from_table(table_name):
 # Function to fetch the disease name from query_disease table
 def fetch_disease_name():
     db_connection = get_db_connection()
-    query = "SELECT query FROM query_disease LIMIT 1"  # Adjust query as needed
+    query = "SELECT query FROM query_disease ORDER BY id DESC LIMIT 1;"  # Adjust query as needed
     cursor = db_connection.cursor()
     cursor.execute(query)
     result = cursor.fetchone()
