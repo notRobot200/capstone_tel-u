@@ -13,6 +13,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the content of the local src directory to the working directory in the container
 COPY . /app/
 
+# Download NLTK data
+RUN python -m nltk.downloader stopwords
+
 # Download spacy model
 RUN python -m spacy download en_core_web_lg
 
