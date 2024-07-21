@@ -15,7 +15,7 @@ from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Adjust CORS settings as necessary
 socketio = SocketIO(app, cors_allowed_origins="*")
 lock = threading.Lock()
 
