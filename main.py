@@ -16,7 +16,7 @@ from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # Adjust CORS settings as necessary
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 lock = threading.Lock()
 
 df_icd = pd.read_pickle('precomputed_icd_vectors.pkl')
