@@ -12,11 +12,9 @@ import nltk
 from nltk.corpus import stopwords
 import threading
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
-from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Adjust CORS settings as necessary
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+CORS(app)
 lock = threading.Lock()
 
 df_icd = pd.read_pickle('precomputed_icd_vectors.pkl')
@@ -262,9 +260,6 @@ def insert_query_to_db(user_id, query, nama_pasien):
 
         cursor.close()
         db_connection.close()
-
-        # Emit event to update patient names
-        socketio.emit('update_patient_names', {'user_id': user_id})
 
     except mysql.connector.Error as err:
         print(f"Error while inserting to MySQL: {err}")
@@ -573,28 +568,24 @@ def get_user_ids():
         print(f"Error: {e}")
         return jsonify({"error": "An error occurred"}), 500
 
-@app.route('/get_patient_names', methods=['GET'])
+@app.route('/get_patient_names')
 def get_patient_names():
     user_id = request.args.get('user_id')
+
+    if not user_id:
+        return jsonify({"error": "User ID is required"}), 400
+
     try:
-        db_connection = mysql.connector.connect(
-            host="34.145.29.172",
-            user="beingman",
-            password="123",
-            database="oetomo"
-        )
-        cursor = db_connection.cursor()
-        select_query = "SELECT DISTINCT patient_name FROM query_disease WHERE user_id = %s"
-        cursor.execute(select_query, (user_id,))
-        result = cursor.fetchall()
-        patient_names = [row[0] for row in result]
-
-        cursor.close()
-        db_connection.close()
-
+        query = "SELECT DISTINCT patient_name FROM query_disease WHERE user_id = %s"
+        result = execute_query(query, (user_id,))
+        patient_names = [row["patient_name"] for row in result]
         return jsonify(patient_names)
-    except mysql.connector.Error as err:
-        return jsonify({'error': str(err)}), 500
+    except OperationalError as e:
+        print(f"OperationalError: {e}")
+        return jsonify({"error": "Operational error, please try again later"}), 500
+    except SQLAlchemyError as e:
+        print(f"Error: {e}")
+        return jsonify({"error": "An error occurred"}), 500
 
 @app.route('/get_queries')
 def get_queries():
@@ -664,14 +655,14 @@ def get_icd_codes():
 
 #KLAIM INACBG
 # Fungsi untuk menghubungkan ke database dan mengambil data dari tabel klaim_inacbg
-def get_data_from_db():
+def get_data_from_db(table_name):
     connection = mysql.connector.connect(
         host="34.145.29.172",
         user="beingman",
         password="123",
         database="oetomo"
     )
-    query = "SELECT * FROM klaim_inacbg"
+    query = f"SELECT * FROM {table_name}"
     df = pd.read_sql(query, connection)
     connection.close()
     return df
@@ -681,14 +672,48 @@ def search_df(df, search_term):
     result = df.apply(lambda row: row.astype(str).str.contains(search_term, case=False).any(), axis=1)
     return df[result]
 
-@app.route('/search', methods=['GET'])
-def search():
+@app.route('/search/klaim_inacbg', methods=['GET'])
+def search_klaim_inacbg():
     search_term = request.args.get('q')
     if not search_term:
         return jsonify({"error": "Parameter 'q' is required"}), 400
 
-    # Ambil data dari database
-    df = get_data_from_db()
+    # Ambil data dari tabel klaim_inacbg
+    df = get_data_from_db('klaim_inacbg')
+
+    # Lakukan pencarian
+    result_df = search_df(df, search_term)
+
+    # Konversi hasil ke JSON
+    result_json = result_df.to_dict(orient='records')
+
+    return jsonify(result_json)
+
+@app.route('/search/medis', methods=['GET'])
+def search_medis():
+    search_term = request.args.get('q')
+    if not search_term:
+        return jsonify({"error": "Parameter 'q' is required"}), 400
+
+    # Ambil data dari tabel medis
+    df = get_data_from_db('medis')
+
+    # Lakukan pencarian
+    result_df = search_df(df, search_term)
+
+    # Konversi hasil ke JSON
+    result_json = result_df.to_dict(orient='records')
+
+    return jsonify(result_json)
+
+@app.route('/search/administrasi', methods=['GET'])
+def search_administrasi():
+    search_term = request.args.get('q')
+    if not search_term:
+        return jsonify({"error": "Parameter 'q' is required"}), 400
+
+    # Ambil data dari tabel administrasi
+    df = get_data_from_db('administrasi')
 
     # Lakukan pencarian
     result_df = search_df(df, search_term)
@@ -703,5 +728,4 @@ def search():
 # insert_selected_icd_to_db(1, 'A00', 'Test 1', 'John')
 
 if __name__ == '__main__':
-    # app.run(port=int(os.environ.get("PORT", 8080)), host='0.0.0.0', debug=True)
-    socketio.run(app, port=int(os.environ.get("PORT", 8080)), host='0.0.0.0', debug=True)
+    app.run(port=int(os.environ.get("PORT", 8080)), host='0.0.0.0', debug=True)
