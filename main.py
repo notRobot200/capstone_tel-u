@@ -15,7 +15,6 @@ from sqlalchemy.exc import OperationalError, SQLAlchemyError
 
 app = Flask(__name__)
 CORS(app)
-lock = threading.Lock()
 
 df_icd = pd.read_pickle('precomputed_icd_vectors.pkl')
 model = joblib.load('model_svc_en.pkl')
@@ -51,8 +50,7 @@ def search_icd_manual():
     if not matching_entries_manual.empty:
         matching_entries_manual['similarity'] = 1.0
         result_manual = matching_entries_manual[['kode_icd', 'nama_penyakit', 'similarity']].to_dict(orient='records')
-        with lock:
-            insert_search_results_to_db(user_id, result_manual)
+        insert_search_results_to_db(user_id, result_manual)
         return jsonify(result_manual)
     else:
         result_manual = [
@@ -62,8 +60,7 @@ def search_icd_manual():
                 'similarity': 0.0
             }
         ]
-        with lock:
-            insert_search_results_to_db(user_id, result_manual)
+        insert_search_results_to_db(user_id, result_manual)
         return jsonify(result_manual)
 
 
@@ -95,8 +92,7 @@ def search_icd_nlp():
                 'similarity': 0.0
             }
         ]
-        with lock:
-            insert_search_results_to_db(user_id, result_nlp)
+        insert_search_results_to_db(user_id, result_nlp)
         return jsonify(result_nlp)
 
 @app.route('/search_icd_ctrlf', methods=['POST'])
@@ -119,8 +115,7 @@ def search_icd_ctrlf():
     if not matching_entries_ctrlf.empty:
         matching_entries_ctrlf['similarity'] = 0.99
         result_ctrlf = matching_entries_ctrlf[['kode_icd', 'nama_penyakit', 'similarity']].to_dict(orient='records')
-        with lock:
-            insert_search_results_to_db(user_id, result_ctrlf)
+        insert_search_results_to_db(user_id, result_ctrlf)
         return jsonify(result_ctrlf)
     else:
         result_ctrlf = [
@@ -130,8 +125,7 @@ def search_icd_ctrlf():
                 'similarity': 0.0
             }
         ]
-        with lock:
-            insert_search_results_to_db(user_id, result_ctrlf)
+        insert_search_results_to_db(user_id, result_ctrlf)
         return jsonify(result_ctrlf)
 
 
