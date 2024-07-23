@@ -50,6 +50,7 @@ def search_icd_manual():
     if not matching_entries_manual.empty:
         matching_entries_manual['similarity'] = 1.0
         result_manual = matching_entries_manual[['kode_icd', 'nama_penyakit', 'similarity']].to_dict(orient='records')
+        print(f"Inserting manual search results for user_id: {user_id}")
         insert_search_results_to_db(user_id, result_manual)
         return jsonify(result_manual)
     else:
@@ -60,6 +61,7 @@ def search_icd_manual():
                 'similarity': 0.0
             }
         ]
+        print(f"Inserting manual search results (not found) for user_id: {user_id}")
         insert_search_results_to_db(user_id, result_manual)
         return jsonify(result_manual)
 
@@ -82,6 +84,7 @@ def search_icd_nlp():
 
     if not matching_entries_nlp.empty:
         result_nlp = matching_entries_nlp[['kode_icd', 'nama_penyakit', 'similarity']].to_dict(orient='records')
+        print(f"Inserting manual search results for user_id: {user_id}")
         insert_search_results_to_db(user_id, result_nlp)
         return jsonify(result_nlp)
     else:
@@ -92,8 +95,10 @@ def search_icd_nlp():
                 'similarity': 0.0
             }
         ]
+        print(f"Inserting manual search results (not found) for user_id: {user_id}")
         insert_search_results_to_db(user_id, result_nlp)
         return jsonify(result_nlp)
+
 
 @app.route('/search_icd_ctrlf', methods=['POST'])
 def search_icd_ctrlf():
@@ -115,6 +120,7 @@ def search_icd_ctrlf():
     if not matching_entries_ctrlf.empty:
         matching_entries_ctrlf['similarity'] = 0.99
         result_ctrlf = matching_entries_ctrlf[['kode_icd', 'nama_penyakit', 'similarity']].to_dict(orient='records')
+        print(f"Inserting manual search results for user_id: {user_id}")
         insert_search_results_to_db(user_id, result_ctrlf)
         return jsonify(result_ctrlf)
     else:
@@ -125,6 +131,7 @@ def search_icd_ctrlf():
                 'similarity': 0.0
             }
         ]
+        print(f"Inserting manual search results (not found) for user_id: {user_id}")
         insert_search_results_to_db(user_id, result_ctrlf)
         return jsonify(result_ctrlf)
 
@@ -258,6 +265,29 @@ def insert_query_to_db(user_id, query, nama_pasien):
     except mysql.connector.Error as err:
         print(f"Error while inserting to MySQL: {err}")
 
+# def insert_search_results_to_db(user_id, results):
+#     try:
+#         db_connection = mysql.connector.connect(
+#             host="34.145.29.172",
+#             user="beingman",
+#             password="123",
+#             database="oetomo"
+#         )
+
+#         cursor = db_connection.cursor()
+#         insert_query = "INSERT INTO search_icd (user_id, kode_icd, nama_penyakit, similarity) VALUES (%s, %s, %s, %s)"
+
+#         for result in results:
+#             cursor.execute(insert_query, (user_id, result['kode_icd'], result['nama_penyakit'], result['similarity']))
+
+#         db_connection.commit()
+
+#         cursor.close()
+#         db_connection.close()
+
+#     except mysql.connector.Error as err:
+#         print(f"Error while inserting to MySQL: {err}")
+
 def insert_search_results_to_db(user_id, results):
     try:
         db_connection = mysql.connector.connect(
@@ -271,9 +301,11 @@ def insert_search_results_to_db(user_id, results):
         insert_query = "INSERT INTO search_icd (user_id, kode_icd, nama_penyakit, similarity) VALUES (%s, %s, %s, %s)"
 
         for result in results:
+            print(f"Inserting result for user_id: {user_id}, kode_icd: {result['kode_icd']}")
             cursor.execute(insert_query, (user_id, result['kode_icd'], result['nama_penyakit'], result['similarity']))
 
         db_connection.commit()
+        print(f"Results successfully inserted for user_id: {user_id}")
 
         cursor.close()
         db_connection.close()
