@@ -12,6 +12,8 @@ import nltk
 from nltk.corpus import stopwords
 import threading
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 app = Flask(__name__)
 CORS(app)
@@ -288,30 +290,32 @@ def insert_query_to_db(user_id, query, nama_pasien):
 #     except mysql.connector.Error as err:
 #         print(f"Error while inserting to MySQL: {err}")
 
+# Buat engine dengan connection pooling
+engine = create_engine('mysql+mysqlconnector://beingman:123@34.145.29.172/oetomo',
+                       pool_size=10, max_overflow=20)
+
+Session = sessionmaker(bind=engine)
+
 def insert_search_results_to_db(user_id, results):
     try:
-        db_connection = mysql.connector.connect(
-            host="34.145.29.172",
-            user="beingman",
-            password="123",
-            database="oetomo"
-        )
-
-        cursor = db_connection.cursor()
-        insert_query = "INSERT INTO search_icd (user_id, kode_icd, nama_penyakit, similarity) VALUES (%s, %s, %s, %s)"
+        session = Session()
+        insert_query = "INSERT INTO search_icd (user_id, kode_icd, nama_penyakit, similarity) VALUES (:user_id, :kode_icd, :nama_penyakit, :similarity)"
 
         for result in results:
-            print(f"Inserting result for user_id: {user_id}, kode_icd: {result['kode_icd']}")
-            cursor.execute(insert_query, (user_id, result['kode_icd'], result['nama_penyakit'], result['similarity']))
+            session.execute(insert_query, {
+                'user_id': user_id,
+                'kode_icd': result['kode_icd'],
+                'nama_penyakit': result['nama_penyakit'],
+                'similarity': result['similarity']
+            })
 
-        db_connection.commit()
-        print(f"Results successfully inserted for user_id: {user_id}")
+        session.commit()
 
-        cursor.close()
-        db_connection.close()
-
-    except mysql.connector.Error as err:
-        print(f"Error while inserting to MySQL: {err}")
+    except SQLAlchemyError as e:
+        print(f"Error while inserting to MySQL: {e}")
+        session.rollback()
+    finally:
+        session.close()
 
 def clear_search_icd_table(user_id):
     try:
