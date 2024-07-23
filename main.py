@@ -12,12 +12,9 @@ import nltk
 from nltk.corpus import stopwords
 import threading
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
-import logging
 
 app = Flask(__name__)
 CORS(app)
-# Set up logging
-logging.basicConfig(level=logging.INFO)
 
 df_icd = pd.read_pickle('precomputed_icd_vectors.pkl')
 model = joblib.load('model_svc_en.pkl')
@@ -147,27 +144,6 @@ def search_icd_candidates_ctrlf(df, search_term):
 
     return result
 
-# def get_data_icd_from_db():
-#     try:
-#         db_connection = mysql.connector.connect(
-#             host="34.145.29.172",
-#             user="beingman",
-#             password="123",
-#             database="oetomo"
-#         )
-
-#         query = "SELECT * FROM data_icd_en"
-
-#         df_icd = pd.read_sql(query, con=db_connection)
-
-#         db_connection.close()
-
-#         return df_icd
-
-#     except mysql.connector.Error as err:
-#         print(f"Error while connecting to MySQL: {err}")
-#         return pd.DataFrame()
-
 def get_data_icd_from_db():
     try:
         db_connection = mysql.connector.connect(
@@ -176,16 +152,17 @@ def get_data_icd_from_db():
             password="123",
             database="oetomo"
         )
-        logging.info("Connected to MySQL database")
 
         query = "SELECT * FROM data_icd_en"
+
         df_icd = pd.read_sql(query, con=db_connection)
 
         db_connection.close()
+
         return df_icd
 
     except mysql.connector.Error as err:
-        logging.error(f"Error while connecting to MySQL: {err}")
+        print(f"Error while connecting to MySQL: {err}")
         return pd.DataFrame()
 
 # Fungsi untuk praproses teks
@@ -259,28 +236,6 @@ def search_icd_candidates_manual(query, dataset, model, tfidf_vectorizer):
 
     return matching_entries
 
-# def insert_query_to_db(user_id, query, nama_pasien):
-#     try:
-#         db_connection = mysql.connector.connect(
-#             host="34.145.29.172",
-#             user="beingman",
-#             password="123",
-#             database="oetomo"
-#         )
-
-#         cursor = db_connection.cursor()
-
-#         insert_query = "INSERT INTO query_disease (user_id, query, patient_name) VALUES (%s, %s, %s)"
-#         cursor.execute(insert_query, (user_id, query, nama_pasien))
-
-#         db_connection.commit()
-
-#         cursor.close()
-#         db_connection.close()
-
-#     except mysql.connector.Error as err:
-#         print(f"Error while inserting to MySQL: {err}")
-
 def insert_query_to_db(user_id, query, nama_pasien):
     try:
         db_connection = mysql.connector.connect(
@@ -289,7 +244,6 @@ def insert_query_to_db(user_id, query, nama_pasien):
             password="123",
             database="oetomo"
         )
-        logging.info("Connected to MySQL database for inserting query")
 
         cursor = db_connection.cursor()
 
@@ -300,33 +254,9 @@ def insert_query_to_db(user_id, query, nama_pasien):
 
         cursor.close()
         db_connection.close()
-        logging.info("Query inserted successfully")
 
     except mysql.connector.Error as err:
-        logging.error(f"Error while inserting to MySQL: {err}")
-
-# def insert_search_results_to_db(user_id, results):
-#     try:
-#         db_connection = mysql.connector.connect(
-#             host="34.145.29.172",
-#             user="beingman",
-#             password="123",
-#             database="oetomo"
-#         )
-
-#         cursor = db_connection.cursor()
-#         insert_query = "INSERT INTO search_icd (user_id, kode_icd, nama_penyakit, similarity) VALUES (%s, %s, %s, %s)"
-
-#         for result in results:
-#             cursor.execute(insert_query, (user_id, result['kode_icd'], result['nama_penyakit'], result['similarity']))
-
-#         db_connection.commit()
-
-#         cursor.close()
-#         db_connection.close()
-
-#     except mysql.connector.Error as err:
-#         print(f"Error while inserting to MySQL: {err}")
+        print(f"Error while inserting to MySQL: {err}")
 
 def insert_search_results_to_db(user_id, results):
     try:
@@ -336,7 +266,6 @@ def insert_search_results_to_db(user_id, results):
             password="123",
             database="oetomo"
         )
-        logging.info("Connected to MySQL database for inserting search results")
 
         cursor = db_connection.cursor()
         insert_query = "INSERT INTO search_icd (user_id, kode_icd, nama_penyakit, similarity) VALUES (%s, %s, %s, %s)"
@@ -348,32 +277,9 @@ def insert_search_results_to_db(user_id, results):
 
         cursor.close()
         db_connection.close()
-        logging.info("Search results inserted successfully")
 
     except mysql.connector.Error as err:
-        logging.error(f"Error while inserting to MySQL: {err}")
-
-# def clear_search_icd_table(user_id):
-#     try:
-#         db_connection = mysql.connector.connect(
-#             host="34.145.29.172",
-#             user="beingman",
-#             password="123",
-#             database="oetomo"
-#         )
-
-#         cursor = db_connection.cursor()
-
-#         delete_query = "DELETE FROM search_icd WHERE user_id = %s"
-#         cursor.execute(delete_query, (user_id,))
-
-#         db_connection.commit()
-
-#         cursor.close()
-#         db_connection.close()
-
-#     except mysql.connector.Error as err:
-#         print(f"Error while clearing MySQL table: {err}")
+        print(f"Error while inserting to MySQL: {err}")
 
 def clear_search_icd_table(user_id):
     try:
@@ -383,7 +289,6 @@ def clear_search_icd_table(user_id):
             password="123",
             database="oetomo"
         )
-        logging.info("Connected to MySQL database for clearing search ICD table")
 
         cursor = db_connection.cursor()
 
@@ -394,10 +299,9 @@ def clear_search_icd_table(user_id):
 
         cursor.close()
         db_connection.close()
-        logging.info("Search ICD table cleared successfully")
 
     except mysql.connector.Error as err:
-        logging.error(f"Error while clearing MySQL table: {err}")
+        print(f"Error while clearing MySQL table: {err}")
 
 def translate_to_english(text):
     translator = Translator()
