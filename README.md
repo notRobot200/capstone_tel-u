@@ -1,3 +1,1 @@
-## 🔧 Deployment:
-
-This application is deployed on GCP.
+# tel-u-capstone-backend
